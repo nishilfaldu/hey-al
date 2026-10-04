@@ -5,6 +5,9 @@
 import { fileURLToPath } from 'node:url'
 import { createLiveKitWorker, runLiveKitWorker } from '@mastra/livekit/worker'
 import { AL_AGENT_NAME, mastra } from './index'
+import { isCurrentResource } from './accounts'
+import { markCallUpdated, summarizeCall } from './memory/call-memory'
+import { alMemory } from './memory/al-memory'
 
 export default createLiveKitWorker({
   mastra,
@@ -15,6 +18,22 @@ export default createLiveKitWorker({
   tts: 'inworld/inworld-tts-2',
   // A small local model that reads the transcript to decide when the person has finished a sentence.
   turnDetection: 'multilingual',
+  // Only account-scoped dispatches can read/write Al's persistent memory.
+  memory: ({ metadata }) => metadata.threadId && metadata.resourceId
+    ? { thread: metadata.threadId, resource: metadata.resourceId } : false,
+  onTurnComplete: async ({ memory }) => {
+    if (memory && memory.resource) await markCallUpdated(memory.thread, memory.resource)
+  },
+  onCallEnd: async ({ memory }) => {
+    if (!memory || !memory.resource) return
+    if (!await isCurrentResource(memory.resource)) {
+      // A forget operation may have deleted this thread while the final reply was saving.
+      await alMemory.deleteThread(memory.thread)
+      return
+    }
+    await markCallUpdated(memory.thread, memory.resource, true)
+    await summarizeCall(memory.thread)
+  },
   configuration: {
     greeting: { text: 'Hello, this is Al. How can I help?' },
     // Watch for the agent's endCall tool, let the goodbye finish playing, then hang up.

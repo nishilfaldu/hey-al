@@ -47,3 +47,26 @@ h2 { font-size: 14px; margin: 0; font-weight: 500; }
   *, *::before, *::after { animation: none !important; transition: none !important; }
   .orb { transform: none !important; }
 }
+
+.account-screen { min-height: 100dvh; height: 100dvh; overflow-y: auto; display: grid; place-items: center; padding: 32px 24px; background: radial-gradient(ellipse at 50% 28%, #152a494f, transparent 65%); }
+.account-card { position: relative; width: min(100%, 380px); }
+.account-glow { position: absolute; width: 110px; height: 110px; right: -15px; top: 12px; border-radius: 50%; background: radial-gradient(circle at 35% 30%, #bed9ff60, #5486e024 50%, transparent 72%); filter: blur(18px); pointer-events: none; }
+.account-eyebrow { font-size: 15px; color: #a4bddf; letter-spacing: .15em; margin: 0 0 26px; }
+.account-card h1 { font-size: clamp(36px, 8vw, 46px); font-weight: 500; letter-spacing: -.045em; line-height: 1.15; margin: 0 0 20px; }
+.account-intro { color: #b0bacb; line-height: 1.6; font-size: 17px; margin: 0 0 28px; }
+.account-card form { display: flex; flex-direction: column; }
+.account-card label { font-size: 16px; margin: 0 0 9px; }
+.account-card input { width: 100%; height: 54px; border: 1px solid #ffffff24; border-radius: 12px; padding: 0 16px; color: #edf0f8; background: #111722; font: inherit; font-size: 18px; margin: 0 0 22px; }
+.account-card input:focus { outline: 2px solid #93ceff; outline-offset: 3px; }
+.account-card input:disabled { opacity: .6; }
+.account-card #password { margin-bottom: 8px; }
+.account-hint { color: #9daabd; font-size: 14px; margin: 0 0 22px; }
+.account-error { color: #ffc0cb; line-height: 1.5; margin: 0 0 20px; }
+.account-submit { min-height: 56px; border: 0; border-radius: 30px; background: #edf0f8; color: #141824; font-size: 18px; font-weight: 600; }
+.account-submit:hover { background: white; }
+.account-submit:disabled { opacity: .65; }
+.account-memory-note { color: #92a0b5; font-size: 14px; line-height: 1.6; margin: 24px 0 0; }
+.account-retry { color: #a9d1ff; background: none; border: 0; font-size: 15px; padding: 12px 0; }
+.account-controls { position: fixed; z-index: 3; left: max(24px, env(safe-area-inset-left)); bottom: max(24px, env(safe-area-inset-bottom)); max-width: 260px; }
+.account-controls button { background: none; border: 0; color: #aeb8c9; font-size: 15px; padding: 10px 0; }
+.account-controls p { color: #ffc0cb; font-size: 14px; }

@@ -1,5 +1,5 @@
-import { VoiceApp } from "@/components/voice-app";
+import { AccountGate } from "@/components/account-gate";
 
 export default function Home() {
-  return <VoiceApp />;
+  return <AccountGate />;
 }

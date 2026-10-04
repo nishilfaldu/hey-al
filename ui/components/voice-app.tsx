@@ -34,7 +34,7 @@ function microphoneError(error: unknown) {
   return null;
 }
 
-export function VoiceApp() {
+export function VoiceApp({ onSessionExpired }: { onSessionExpired?: () => void }) {
   const [room, setRoom] = useState<Room | null>(null);
   const [starting, setStarting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -96,6 +96,7 @@ export function VoiceApp() {
         response = await fetch("/api/voice", { method: "POST", signal: controller.signal });
       } finally { clearTimeout(timeout); }
       const details = await response.json();
+      if (response.status === 401) { track.stop(); endCall(); onSessionExpired?.(); return; }
       if (!response.ok) throw new Error(details.error || "Couldn't start the call. Try again.");
       if (attempt.current !== currentAttempt) { track.stop(); return; }
       nextRoom = new Room({ adaptiveStream: true, dynacast: true });

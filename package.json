@@ -10,7 +10,8 @@
     "ui:dev": "pnpm --filter ui dev",
     "ui:build": "pnpm --filter ui build",
     "build": "mastra build",
-    "start": "mastra start"
+    "start": "mastra start",
+    "test": "node --env-file-if-exists=.env --env-file-if-exists=.env.local --import tsx --test tests/*.test.ts"
   },
   "keywords": [],
   "author": "",
@@ -30,10 +31,12 @@
     "@mastra/observability": "1.18.3",
     "@mastra/pg": "^1.29.0",
     "@onkernel/sdk": "^0.119.0",
+    "pg": "^8.23.1",
     "zod": "^4.4.3"
   },
   "devDependencies": {
     "@types/node": "latest",
+    "@types/pg": "^8.23.1",
     "mastra": "1.32.1",
     "tsx": "^4.23.15",
     "typescript": "^6.0.3"

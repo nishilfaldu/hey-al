@@ -38,6 +38,9 @@ importers:
       '@onkernel/sdk':
         specifier: ^0.119.0
         version: 0.119.0
+      pg:
+        specifier: ^8.23.1
+        version: 8.23.1
       zod:
         specifier: ^4.4.3
         version: 4.6.5
@@ -45,6 +48,9 @@ importers:
       '@types/node':
         specifier: latest
         version: 26.6.4
+      '@types/pg':
+        specifier: ^8.23.1
+        version: 8.23.1
       mastra:
         specifier: 1.32.1
         version: 1.32.1(@hono/node-server@1.19.17(hono@4.13.12))(@mastra/core@1.74.0(rxjs@7.8.2)(zod-to-json-schema@3.25.2(zod@4.6.5))(zod@4.6.5))(rxjs@7.8.2)(typescript@6.0.3)(zod@4.6.5)
@@ -1929,6 +1935,9 @@ packages:
 
   '@types/node@26.6.4':
     resolution: {integrity: sha512-ldVPDCzj7fsaGZrLB0NuHuTvJcsNasysBAqMolr/cgxrLd1xbqxIr3XJiPnHHJUCxj5sNF1vnRj9aWnrVh5Jcg==}
+
+  '@types/pg@8.23.1':
+    resolution: {integrity: sha512-fKVHpikPdg4GKks3JuLEhvwSyvwzF23hnabPy6DD8ljVbC7+6J5dQzdv4arV6jqq57djnMgs1HKBxX4P8aBI3A==}
 
   '@types/pidusage@2.0.5':
     resolution: {integrity: sha512-MIiyZI4/MK9UGUXWt0jJcCZhVw7YdhBuTOuqP/BjuLDLZ2PmmViMIQgZiWxtaMicQfAz/kMrZ5T7PKxFSkTeUA==}
@@ -6861,6 +6870,12 @@ snapshots:
   '@types/node@26.6.4':
     dependencies:
       undici-types: 8.9.0
+
+  '@types/pg@8.23.1':
+    dependencies:
+      '@types/node': 26.6.4
+      pg-protocol: 1.16.1
+      pg-types: 2.2.0
 
   '@types/pidusage@2.0.5': {}
 

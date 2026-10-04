@@ -1,19 +1,23 @@
 // The browser receives a room-scoped participant token; LiveKit credentials stay in Mastra.
+import { mastraEndpoint, sameOrigin, sessionToken } from '../../../lib/session';
+
 export async function POST(request: Request) {
-  const origin = request.headers.get("origin");
-  if (origin && origin !== new URL(request.url).origin) {
+  if (!sameOrigin(request)) {
     return Response.json({ error: "This call must start from this app." }, { status: 403 });
   }
+  const token = sessionToken(request);
+  if (!token) return Response.json({ error: 'Please sign in to start talking.' }, { status: 401 });
 
   try {
-    const endpoint = new URL("/voice/livekit/connection-details", process.env.MASTRA_URL || "http://localhost:4111");
+    const endpoint = mastraEndpoint('/voice/livekit/connection-details');
     const upstream = await fetch(endpoint, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
       body: JSON.stringify({ agentId: "al" }),
       cache: "no-store",
       signal: AbortSignal.timeout(10_000),
     });
+    if (upstream.status === 401) return Response.json({ error: 'Please sign in again to start talking.' }, { status: 401 });
     if (!upstream.ok) {
       return Response.json({ error: "Couldn't start the call. Check the voice credentials on the Mastra server, then try again." }, { status: 502 });
     }

@@ -2,7 +2,8 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 import { POST } from "../app/api/voice/route";
 
-const request = (origin = "http://localhost:3000") => new Request("http://localhost:3000/api/voice", { method: "POST", headers: { origin } });
+const token = 'a'.repeat(64);
+const request = (origin = "http://localhost:3000") => new Request("http://localhost:3000/api/voice", { method: "POST", headers: { origin, cookie: `al_session=${token}` } });
 const details = { serverUrl: "wss://voice.example.test", roomName: "test-room", participantName: "test-user", participantToken: "room-scoped-token" };
 
 test("forwards to the configured Mastra endpoint and exposes only connection details", async (t) => {
@@ -12,6 +13,7 @@ test("forwards to the configured Mastra endpoint and exposes only connection det
   t.mock.method(globalThis, "fetch", async (url: URL, init: RequestInit) => {
     assert.equal(url.toString(), "http://mastra.example.test:4111/voice/livekit/connection-details");
     assert.equal(init.method, "POST");
+    assert.equal((init.headers as Record<string, string>).Authorization, `Bearer ${token}`);
     assert.deepEqual(JSON.parse(init.body as string), { agentId: "al" });
     return Response.json({ ...details, internalConfig: "must-stay-on-server" });
   });
@@ -19,6 +21,17 @@ test("forwards to the configured Mastra endpoint and exposes only connection det
   assert.equal(response.status, 200);
   assert.equal(response.headers.get("cache-control"), "no-store");
   assert.deepEqual(await response.json(), details);
+});
+
+test('requires a session cookie before requesting a voice token', async (t) => {
+  const fetchMock = t.mock.method(globalThis, 'fetch', async () => { throw new Error('must not fetch'); });
+  assert.equal((await POST(new Request('http://localhost:3000/api/voice', { method: 'POST' }))).status, 401);
+  assert.equal(fetchMock.mock.callCount(), 0);
+});
+
+test('returns expired session errors so the UI can show sign-in again', async (t) => {
+  t.mock.method(globalThis, 'fetch', async () => Response.json({ error: 'expired' }, { status: 401 }));
+  assert.equal((await POST(request())).status, 401);
 });
 
 test("rejects requests from another origin before fetching a token", async (t) => {
