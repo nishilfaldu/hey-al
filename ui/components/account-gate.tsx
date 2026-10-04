@@ -65,20 +65,15 @@ export function AccountGate() {
   </>;
   return <main className="account-screen">
     <section className="account-card" aria-labelledby="account-title">
-      <div className="account-glow" aria-hidden="true" />
-      <p className="account-eyebrow">hey al</p>
-      <h1 id="account-title">A little help,<br />out loud.</h1>
-      <p className="account-intro">Sign in to talk with Al. New here? We’ll create your account.</p>
+      <h1 id="account-title">hey al</h1>
       <form onSubmit={submit}>
         <label htmlFor="email">Email</label>
         <input id="email" name="email" type="email" autoComplete="email" autoCapitalize="none" spellCheck={false} maxLength={254} required disabled={busy} />
         <label htmlFor="password">Password</label>
-        <input id="password" name="password" type="password" autoComplete="current-password" minLength={8} maxLength={128} aria-describedby="password-hint" required disabled={busy} />
-        <p id="password-hint" className="account-hint">Use at least 8 characters.</p>
+        <input id="password" name="password" type="password" autoComplete="current-password" minLength={8} maxLength={128} required disabled={busy} />
         {error && <p className="account-error" role="alert">{error}</p>}
-        <button className="account-submit" type="submit" disabled={busy}>{busy ? 'Just a moment…' : 'Continue to Al'}</button>
+        <button className="account-submit" type="submit" disabled={busy}>Continue</button>
       </form>
-      <p className="account-memory-note">Al remembers what matters across conversations.<br />You can ask Al to correct or forget something.</p>
       {loadFailed && <button className="account-retry" onClick={() => { setLoading(true); setRetry(value => value + 1); }}>Try again</button>}
     </section>
   </main>;
