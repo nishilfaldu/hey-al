@@ -7,6 +7,7 @@
   "scripts": {
     "dev": "mastra dev",
     "voice:dev": "node --env-file=.env --env-file-if-exists=.env.local --import tsx src/mastra/voice-worker.ts dev",
+    "web:dev": "pnpm --filter web dev",
     "build": "mastra build",
     "start": "mastra start"
   },
@@ -23,11 +24,10 @@
     "@livekit/agents-plugin-silero": "^1.9.1",
     "@mastra/agent-browser": "^0.5.3",
     "@mastra/core": "1.74.0",
-    "@mastra/duckdb": "1.12.1",
-    "@mastra/libsql": "1.25.0",
     "@mastra/livekit": "^0.4.2",
     "@mastra/memory": "1.35.0",
     "@mastra/observability": "1.18.3",
+    "@mastra/pg": "^1.29.0",
     "@onkernel/sdk": "^0.119.0",
     "zod": "^4.4.3"
   },
