@@ -1,6 +1,5 @@
 packages:
   - '.'
-  - web
 minimumReleaseAgeExclude:
   - mastra
   - "@mastra/*"
@@ -14,5 +13,4 @@ allowBuilds:
   onnxruntime-node: true
   protobufjs: true
   sharp: true
-  unrs-resolver: false
   utf-8-validate: true

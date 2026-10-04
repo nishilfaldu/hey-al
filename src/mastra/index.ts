@@ -17,8 +17,8 @@ export const AL_AGENT_NAME = 'al';
 
 export const mastra = new Mastra({
   server: {
-    // POST /voice/livekit/connection-details: gives the browser a LiveKit room token and
-    // sends Al's voice worker into that room. The web app calls it to start a call.
+    // POST /voice/livekit/connection-details: gives a client a LiveKit room token and
+    // sends Al's voice worker into that room. Studio's voice call uses it.
     apiRoutes: [liveKitConnectionRoute({ agentName: AL_AGENT_NAME })],
   },
   agents: { agent, al },
