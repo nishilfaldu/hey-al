@@ -6,7 +6,7 @@ import { fileURLToPath } from 'node:url'
 import { createLiveKitWorker, runLiveKitWorker } from '@mastra/livekit/worker'
 import { AL_AGENT_NAME, mastra } from './index'
 import { isCurrentResource } from './accounts'
-import { markCallUpdated, summarizeCall } from './memory/call-memory'
+import { bufferCallMemory, markCallUpdated, settleCallMemory, summarizeCall } from './memory/call-memory'
 import { alMemory } from './memory/al-memory'
 
 export default createLiveKitWorker({
@@ -22,7 +22,9 @@ export default createLiveKitWorker({
   memory: ({ metadata }) => metadata.threadId && metadata.resourceId
     ? { thread: metadata.threadId, resource: metadata.resourceId } : false,
   onTurnComplete: async ({ memory }) => {
-    if (memory && memory.resource) await markCallUpdated(memory.thread, memory.resource)
+    // LiveKit does not await this hook. Observe committed turns without binding
+    // background memory events to a reply stream that has already closed.
+    if (memory && memory.resource) await bufferCallMemory(memory.thread, memory.resource)
   },
   onCallEnd: async ({ memory }) => {
     if (!memory || !memory.resource) return
@@ -31,6 +33,10 @@ export default createLiveKitWorker({
       await alMemory.deleteThread(memory.thread)
       return
     }
+    // Drain idle Observer extraction before the final summary/profile check.
+    // This happens after hang-up, outside the spoken reply path.
+    await settleCallMemory(memory.thread)
+    await alMemory.settled()
     await markCallUpdated(memory.thread, memory.resource, true)
     await summarizeCall(memory.thread)
   },

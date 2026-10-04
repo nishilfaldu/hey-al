@@ -15,10 +15,14 @@ export const recallCallsTool = createTool({
 
 export const forgetMemoryTool = createTool({
   id: 'forget_memory',
-  description: 'Use only when the person explicitly asks to forget information. Provide the complete working-memory profile with the requested facts removed; use {} to forget everything. To prevent resurfacing, also clears all earlier call history and summaries. Tell the person that earlier conversations will be cleared and confirm if they only requested a narrow deletion. After success, explain that they should start a new call and call endCall.',
-  inputSchema: z.object({ keepProfile: profileSchema.describe('Complete profile containing only unrelated facts to retain. Never include the fact requested for deletion.') }),
-  execute: async ({ keepProfile }, { agent }) => {
+  description: 'Use only when the person explicitly asks to forget information. Set forgetAll true to forget everything; keepProfile is ignored in that case. For a narrow deletion, set forgetAll false and provide the complete working-memory profile with the requested facts removed. Immediately invalidates old memory and queues deletion of all earlier call history and summaries in the background. Tell the person that earlier conversations will be cleared and confirm if they only requested a narrow deletion. After success, say you have stopped using that information, explain that they should start a new call and call endCall. Do not claim background deletion has completed.',
+  inputSchema: z.object({
+    forgetAll: z.boolean().describe('True when the person explicitly asks to forget everything. This clears the entire profile regardless of keepProfile.'),
+    keepProfile: profileSchema.optional().describe('For narrow deletion only: complete profile containing unrelated facts to retain. Ignored when forgetAll is true.'),
+  }),
+  execute: async ({ forgetAll, keepProfile }, { agent }) => {
     if (!agent?.resourceId) throw new Error('No user memory on this call.');
-    return forgetMemories(agent.resourceId, keepProfile);
+    if (!forgetAll && keepProfile === undefined) throw new Error('Provide the unrelated profile facts to retain for a narrow deletion.');
+    return forgetMemories(agent.resourceId, forgetAll ? {} : keepProfile);
   },
 });

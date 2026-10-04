@@ -7,7 +7,7 @@ test('account identity, memory isolation, retention and forgetting in Postgres',
   const { storage } = await import('../src/mastra/storage');
   const accounts = await import('../src/mastra/accounts');
   const calls = await import('../src/mastra/memory/call-memory');
-  const { alMemory } = await import('../src/mastra/memory/al-memory');
+  const { alMemory, mergeProfileUpdates } = await import('../src/mastra/memory/al-memory');
   await storage.init();
   await accounts.ensureAppTables();
   const emailA = `al-check-${randomUUID()}@example.test`;
@@ -15,10 +15,13 @@ test('account identity, memory isolation, retention and forgetting in Postgres',
   const password = 'hackathon-test-password';
   const ownedResources: string[] = [];
   t.after(async () => {
+    await calls.cleanupForgottenMemories();
+    await alMemory.settled();
     for (const resourceId of ownedResources) {
       const { threads } = await alMemory.listThreads({ filter: { resourceId } });
       for (const thread of threads) await alMemory.deleteThread(thread.id);
       await storage.pool.query('DELETE FROM al_calls WHERE resource_id = $1', [resourceId]);
+      await storage.pool.query('DELETE FROM al_memory_cleanup WHERE resource_id = $1', [resourceId]);
       const memoryStore = await storage.getStore('memory');
       await memoryStore?.updateResource({ resourceId, workingMemory: '{}' });
     }
@@ -33,6 +36,15 @@ test('account identity, memory isolation, retention and forgetting in Postgres',
   const resourceA = accounts.resourceFor(accountA);
   const resourceB = accounts.resourceFor(accountB);
   ownedResources.push(resourceA, resourceB);
+
+  await t.test('a name correction preserves interests even if extraction fills unrelated arrays with defaults', () => {
+    assert.deepEqual(mergeProfileUpdates({ preferredName: 'Elsie', interests: ['orchids'] }, {
+      updatedFields: ['preferredName'], profile: { preferredName: 'Eleanor', interests: [] },
+    }), { preferredName: 'Eleanor', interests: ['orchids'] });
+    assert.deepEqual(mergeProfileUpdates({ interests: ['orchids'] }, {
+      updatedFields: ['interests'], profile: { interests: [] },
+    }), { interests: [] });
+  });
 
   await t.test('new email creates one account; returning email verifies its password', async () => {
     const signedIn = await accounts.createOrSignIn({ email: emailA.toUpperCase(), password }, `test-${randomUUID()}`);
@@ -98,6 +110,47 @@ test('account identity, memory isolation, retention and forgetting in Postgres',
     assert.match(profile, /Margaret/);
     assert.doesNotMatch(profile, /gardening/);
     assert.deepEqual(await calls.readCallSummaries(nextResource), []);
+    await calls.cleanupForgottenMemories();
+  });
+
+  await t.test('forget returns while deletion is blocked, and failed cleanup is durably retried', async () => {
+    const activeThread = await calls.startCall(resourceB);
+    await alMemory.createThread({ threadId: activeThread, resourceId: resourceB });
+    await alMemory.updateWorkingMemory({ threadId: activeThread, resourceId: resourceB, workingMemory: '{"preferredName":"Ben","interests":["gardening"]}' });
+    const originalDelete = alMemory.deleteThread.bind(alMemory);
+    const entered = Promise.withResolvers<void>();
+    const release = Promise.withResolvers<void>();
+    alMemory.deleteThread = async threadId => {
+      if (threadId === activeThread) {
+        entered.resolve();
+        await release.promise;
+        throw new Error('Simulated background cleanup failure');
+      }
+      return originalDelete(threadId);
+    };
+    try {
+      const result = await calls.forgetMemories(resourceB, { preferredName: 'Ben' });
+      assert.equal(result.memoryInvalidated, true);
+      assert.equal(result.cleanup, 'queued');
+      await entered.promise;
+      assert.equal(await accounts.isCurrentResource(resourceB), false);
+      assert.ok(await alMemory.getThreadById({ threadId: activeThread }), 'bulk deletion is still blocked');
+      const nextAccount = (await accounts.getAccount(second.token))!;
+      const nextResource = accounts.resourceFor(nextAccount);
+      ownedResources.push(nextResource);
+      assert.deepEqual(JSON.parse((await alMemory.getWorkingMemory({ threadId: 'profile', resourceId: nextResource }))!), { preferredName: 'Ben' });
+      await assert.rejects(calls.forgetMemories(resourceB, {}), /old memory profile/);
+      release.resolve();
+      await calls.cleanupForgottenMemories();
+      assert.equal((await storage.pool.query('SELECT 1 FROM al_memory_cleanup WHERE resource_id = $1', [resourceB])).rowCount, 1);
+      alMemory.deleteThread = originalDelete;
+      await calls.cleanupForgottenMemories();
+      assert.equal(await alMemory.getThreadById({ threadId: activeThread }), null);
+      assert.equal((await storage.pool.query('SELECT 1 FROM al_memory_cleanup WHERE resource_id = $1', [resourceB])).rowCount, 0);
+    } finally {
+      release.resolve();
+      alMemory.deleteThread = originalDelete;
+    }
   });
 
   await t.test('login attempts are bounded', async () => {

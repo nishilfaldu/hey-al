@@ -53,6 +53,9 @@ export function ensureAppTables() {
           summary text, purged boolean NOT NULL DEFAULT false
         );
         CREATE INDEX IF NOT EXISTS al_calls_resource_idx ON al_calls(resource_id, started_at DESC);
+        CREATE TABLE IF NOT EXISTS al_memory_cleanup (
+          resource_id text PRIMARY KEY, requested_at timestamptz NOT NULL DEFAULT now()
+        );
       `);
       await client.query('COMMIT');
     } catch (error) {
