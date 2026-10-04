@@ -10,7 +10,7 @@ export async function POST(request: Request) {
     const upstream = await fetch(endpoint, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ agentId: "support" }),
+      body: JSON.stringify({ agentId: "al" }),
       cache: "no-store",
       signal: AbortSignal.timeout(10_000),
     });

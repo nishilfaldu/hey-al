@@ -12,7 +12,7 @@ test("forwards to the configured Mastra endpoint and exposes only connection det
   t.mock.method(globalThis, "fetch", async (url: URL, init: RequestInit) => {
     assert.equal(url.toString(), "http://mastra.example.test:4111/voice/livekit/connection-details");
     assert.equal(init.method, "POST");
-    assert.deepEqual(JSON.parse(init.body as string), { agentId: "support" });
+    assert.deepEqual(JSON.parse(init.body as string), { agentId: "al" });
     return Response.json({ ...details, internalConfig: "must-stay-on-server" });
   });
   const response = await POST(request());
