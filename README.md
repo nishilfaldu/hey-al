@@ -19,7 +19,7 @@ Requires Node.js 24.11+ and pnpm 11+.
    pnpm exec livekit-agents download-files
    ```
 
-3. Run these in **two separate terminals** and leave both running:
+3. Run these in **three separate terminals** and leave all running:
 
    Terminal 1:
 
@@ -33,8 +33,16 @@ Requires Node.js 24.11+ and pnpm 11+.
    pnpm run voice:dev
    ```
 
-4. Open [Mastra Studio](http://localhost:4111), select **Support**, click **Start voice call**, and allow microphone access.
+   Terminal 3:
+
+   ```sh
+   pnpm run ui:dev
+   ```
+
+4. Open [the voice UI](http://localhost:3000), click **Start talking**, and allow microphone access. Use **Transcript** to see the conversation.
+
+Open [Mastra Studio](http://localhost:4111) to inspect agents, tools, and traces.
 
 Optional: use your LiveKit project's **Agents → Launch Console** to test with agent name `mastra-voice`.
 
-Restart the voice worker after changing agent or tool code. For browser automation, install Chromium with `npx playwright install chromium`.
+Restart the voice worker after changing its voice settings. Mastra reloads agent and tool changes automatically. For browser automation, install Chromium with `npx playwright install chromium`.

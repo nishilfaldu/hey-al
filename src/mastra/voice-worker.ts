@@ -1,10 +1,14 @@
 import { fileURLToPath } from 'node:url'
-import { createLiveKitWorker, runLiveKitWorker } from '@mastra/livekit/worker'
-import { mastra } from './index'
+import { Mastra } from '@mastra/core/mastra'
+import { createLiveKitWorker, createRemoteAgentReplyGenerator, runLiveKitWorker } from '@mastra/livekit/worker'
 
 export default createLiveKitWorker({
-  mastra,
-  agent: 'support',
+  // The server owns agents and storage; each voice job only handles the call.
+  mastra: new Mastra({}),
+  generate: createRemoteAgentReplyGenerator({
+    baseUrl: process.env.MASTRA_URL || 'http://localhost:4111',
+    agentId: 'supportAgent',
+  }),
   stt: 'deepgram/nova-3',
   tts: 'cartesia/sonic-3',
   turnDetection: 'multilingual',
