@@ -4,8 +4,13 @@ minimumReleaseAgeExclude:
   - mastra
   - "@mastra/*"
 allowBuilds:
+  '@livekit/local-inference': true
+  agent-browser: true
   bufferutil: true
+  edgedriver: false
   esbuild: true
+  geckodriver: false
+  onnxruntime-node: true
   protobufjs: true
   sharp: true
   utf-8-validate: true
