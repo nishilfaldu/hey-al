@@ -11,16 +11,17 @@ import { Orb } from "./orb";
 type Transcript = { id: string; speaker: string; text: string };
 type VoiceState = "idle" | "connecting" | "listening" | "thinking" | "speaking" | "muted" | "error";
 const labels: Record<VoiceState, string> = {
-  idle: "What's on your mind?", connecting: "One moment…", listening: "I'm listening.",
-  thinking: "Let me think…", speaking: "Al is speaking.", muted: "Take your time.", error: "Let's try that again.",
+  idle: "Ready", connecting: "Connecting", listening: "Listening",
+  thinking: "Thinking", speaking: "Speaking", muted: "Muted", error: "Disconnected",
 };
 
-function Icon({ name }: { name: "mic" | "muted" | "end" | "transcript" | "close" }) {
+function Icon({ name }: { name: "mic" | "muted" | "end" | "transcript" | "close" | "sound" }) {
   return <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
     {name === "mic" || name === "muted" ? <><rect x="9" y="2" width="6" height="12" rx="3" /><path d="M5 10v2a7 7 0 0 0 14 0v-2M12 19v3M8 22h8" />{name === "muted" && <path d="m3 3 18 18" />}</> : null}
     {name === "end" && <><path d="M3 14c0-6 18-6 18 0v3l-5-1v-3M3 14v3l5-1v-3" /></>}
     {name === "transcript" && <><path d="M5 5h14v12H9l-4 4V5Z" /><path d="M9 9h6M9 13h4" /></>}
     {name === "close" && <path d="m6 6 12 12M18 6 6 18" />}
+    {name === "sound" && <><path d="M11 4 6 8H3v8h3l5 4V4Z" /><path d="M15 8a6 6 0 0 1 0 8M18 5a10 10 0 0 1 0 14" /></>}
   </svg>;
 }
 
@@ -121,12 +122,11 @@ export function VoiceApp() {
 
   const common = { starting, error, transcript, showTranscript, setShowTranscript, startCall, endCall };
   return <main className="voice-app">
-    <header className="app-header"><span className="wordmark" aria-label="hey-al">hey<span>,</span> al<span>.</span></span><span className="header-caption">A little help, out loud.</span></header>
     {room ? <RoomContext.Provider value={room}>
       <ConnectedVoice {...common} onError={failCall} onTranscript={setTranscript} />
       <RoomAudioRenderer />
     </RoomContext.Provider> : <VoiceScene {...common} state={starting ? "connecting" : error ? "error" : "idle"} energy={0} />}
-    <footer className="app-footer"><span>Just speak. Al will take it from here.</span><button className="text-button" onClick={() => setShowTranscript(!showTranscript)} aria-expanded={showTranscript} aria-controls="transcript-panel"><Icon name="transcript" />Transcript</button></footer>
+    <button className="transcript-toggle icon-button" aria-label="Conversation chat" onClick={() => setShowTranscript(!showTranscript)} aria-expanded={showTranscript} aria-controls="transcript-panel"><Icon name="transcript" /></button>
   </main>;
 }
 
@@ -184,23 +184,20 @@ function VoiceScene({ state, energy, starting, error, transcript, showTranscript
           <Orb energy={energy} active={inCall || starting} />
         </button>
       </div>
-      <div className="status" role="status" aria-live="polite"><span className={`status-dot ${inCall ? "status-dot-active" : ""}`} /><span>{starting ? "Connecting" : error ? "Disconnected" : inCall ? "Connected" : "Ready when you are"}</span></div>
-      <h1>{labels[state]}</h1>
-      <p className={`conversation-hint ${error ? "error-hint" : ""}`} role={error ? "alert" : undefined}>
-        {error || (state === "idle" ? "Start a conversation. We'll figure it out together." : state === "connecting" ? "Getting everything ready for you." : state === "muted" ? "Your microphone is muted." : "Speak naturally. You can interrupt me anytime.")}
-      </p>
+      <div className="status" role="status" aria-live="polite" title={error || undefined}><span className={`status-dot ${inCall ? "status-dot-active" : ""}`} /><span>{labels[state]}</span></div>
+      {error && <span className="sr-only" role="alert">{error}</span>}
       <div className="call-controls">
         {inCall ? <>
           <button className={`round-control ${muted ? "is-muted" : ""}`} onClick={toggleMute} disabled={starting || muting} aria-label={muted ? "Unmute microphone" : "Mute microphone"} aria-pressed={muted}><Icon name={muted ? "muted" : "mic"} /></button>
-          <button className="end-control" onClick={endCall}><Icon name="end" />End call</button>
-        </> : starting ? <button className="secondary-control" onClick={endCall}>Cancel</button> : <button className="start-control" onClick={startCall}><Icon name="mic" />{error ? "Try again" : "Start talking"}</button>}
+          <button className="round-control end-control" onClick={endCall} aria-label="End call"><Icon name="end" /></button>
+        </> : starting ? <button className="round-control" onClick={endCall} aria-label="Cancel call"><Icon name="close" /></button> : <button className="start-control" onClick={startCall}><Icon name="mic" />Start talking</button>}
+        {inCall && enableAudio && <button className="round-control" onClick={enableAudio} aria-label="Enable sound"><Icon name="sound" /></button>}
       </div>
-      {inCall && enableAudio && <button className="audio-unlock" onClick={enableAudio}>Enable sound</button>}
     </section>
     {showTranscript && <aside className="transcript-panel" id="transcript-panel" aria-label="Conversation transcript">
       <div className="transcript-heading"><h2>Conversation</h2><button className="icon-button" aria-label="Close transcript" onClick={() => setShowTranscript(false)}><Icon name="close" /></button></div>
       <div className="transcript-messages" ref={transcriptBox} aria-live="polite" aria-relevant="additions text">
-        {transcript.length ? transcript.map((message) => <div key={message.id} className={`transcript-message ${message.speaker === "You" ? "from-you" : ""}`}><span>{message.speaker}</span><p>{message.text}</p></div>) : <p className="transcript-empty">Your words will appear here when the conversation begins.</p>}
+        {transcript.map((message) => <div key={message.id} className={`transcript-message ${message.speaker === "You" ? "from-you" : ""}`}><span>{message.speaker}</span><p>{message.text}</p></div>)}
       </div>
     </aside>}
   </>;

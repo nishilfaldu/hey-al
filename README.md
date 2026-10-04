@@ -39,7 +39,7 @@ Requires Node.js 24.11+ and pnpm 11+.
    pnpm run ui:dev
    ```
 
-4. Open [the voice UI](http://localhost:3000), click **Start talking**, and allow microphone access. Use **Transcript** to see the conversation.
+4. Open [the voice UI](http://localhost:3000), click **Start talking**, and allow microphone access. Use the chat icon to see the conversation.
 
 Open [Mastra Studio](http://localhost:4111) to inspect agents, tools, and traces.
 
