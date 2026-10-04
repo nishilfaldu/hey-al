@@ -7,6 +7,8 @@
   "scripts": {
     "dev": "mastra dev",
     "voice:dev": "node --env-file=.env --env-file-if-exists=.env.local --import tsx src/mastra/voice-worker.ts dev",
+    "ui:dev": "pnpm --filter ui dev",
+    "ui:build": "pnpm --filter ui build",
     "build": "mastra build",
     "start": "mastra start"
   },
