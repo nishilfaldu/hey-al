@@ -41,6 +41,14 @@ Voice calls with persistent account memory start through the signed-in UI. Studi
 
 Restart the voice worker after changing agent or tool code. For browser automation, install Chromium with `npx playwright install chromium`.
 
+## Voice reminders
+
+Keep your computer awake, all three terminals running, and your voice call connected. Ask Al, "Remind me to water the plants in two minutes." Al asks for your timezone the first time, then saves the reminder in Neon. The Mastra scheduler checks every minute, and the voice worker speaks due reminders during a quiet moment. You can also ask to list, reschedule, or cancel reminders. These are one-time reminders; delivery can be delayed while you are talking. If you disconnect, unsent reminders wait for your next call.
+
+Inspect the dispatcher in [Studio schedules](http://localhost:4111/workflows/schedules). To check the real-model reminder tools with fictional test data, run `AL_REMINDER_LLM_SMOKE=1 pnpm test`. This calls OpenAI. Interrupted or uncertain playback is visible when you ask Al to list reminders; it is not automatically repeated. Forgetting conversation memory keeps reminders; cancel them separately.
+
+With the local API and voice worker running, `AL_REMINDER_LIVEKIT_SMOKE=1 pnpm test` also checks scheduler delivery, real LiveKit audio, chat transcription, and follow-up recall using a temporary headless caller. It uses LiveKit/OpenAI inference without your microphone.
+
 ## Accounts and memory
 
 The UI remembers a sign-in for 90 days with an HttpOnly, SameSite cookie. Passwords are salted and hashed with scrypt; only hashes of session tokens are stored in Neon. Sign-out revokes the session. There is no verification email, password recovery, profile picker, or shared-device flow.

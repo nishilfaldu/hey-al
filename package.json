@@ -6,7 +6,7 @@
   "private": true,
   "scripts": {
     "dev": "mastra dev",
-    "voice:dev": "node --env-file=.env --env-file-if-exists=.env.local --import tsx src/mastra/voice-worker.ts dev",
+    "voice:dev": "AL_PROCESS_ROLE=voice node --env-file=.env --env-file-if-exists=.env.local --import tsx src/mastra/voice-worker.ts dev",
     "ui:dev": "pnpm --filter ui dev",
     "ui:build": "pnpm --filter ui build",
     "build": "mastra build",
@@ -21,6 +21,7 @@
     "node": ">=22.13.0"
   },
   "dependencies": {
+    "@js-temporal/polyfill": "^0.5.1",
     "@livekit/agents": "^1.9.1",
     "@livekit/agents-plugin-livekit": "^1.9.1",
     "@livekit/agents-plugin-silero": "^1.9.1",

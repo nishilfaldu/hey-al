@@ -1,6 +1,7 @@
 import { createHash, randomBytes, randomUUID, scrypt, timingSafeEqual } from 'node:crypto';
 import { z } from 'zod';
 import { storage } from './storage';
+import { reminderSchemaSql } from './reminders/schema';
 
 const deriveKey = (password: string, salt: string) => new Promise<Buffer>((resolve, reject) => {
   scrypt(password, salt, 64, { N: 65536, r: 8, p: 1, maxmem: 96 * 1024 * 1024 }, (error, key) => error ? reject(error) : resolve(key));
@@ -12,7 +13,7 @@ export const credentialsSchema = z.object({
 });
 export type Account = { id: string; email: string; memory_version: number };
 export const resourceFor = (account: Account) => `al:${account.id}:${account.memory_version}`;
-const tokenHash = (token: string) => createHash('sha256').update(token).digest('hex');
+export const tokenHash = (token: string) => createHash('sha256').update(token).digest('hex');
 
 export async function hashPassword(password: string) {
   const salt = randomBytes(16).toString('hex');
@@ -57,6 +58,7 @@ export function ensureAppTables() {
           resource_id text PRIMARY KEY, requested_at timestamptz NOT NULL DEFAULT now()
         );
       `);
+      await client.query(reminderSchemaSql);
       await client.query('COMMIT');
     } catch (error) {
       await client.query('ROLLBACK');

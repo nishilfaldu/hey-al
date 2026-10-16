@@ -3,6 +3,7 @@ import { liveKitConnectionRoute } from '@mastra/livekit';
 import { registerApiRoute, type MiddlewareHandler } from '@mastra/core/server';
 import { AccountError, createOrSignIn, getAccount, resourceFor, SESSION_SECONDS, signOut } from './accounts';
 import { startCall, startMemoryMaintenance } from './memory/call-memory';
+import { createPendingVoiceSession } from './reminders/store';
 
 const bearer = (header?: string) => header?.startsWith('Bearer ') ? header.slice(7) : undefined;
 
@@ -43,12 +44,16 @@ export function authenticatedVoiceRoute(agentName: string) {
     agentName,
     participantIdentity: () => `caller-${randomUUID()}`,
     metadata: async ({ context }) => {
-      const account = await getAccount(bearer(context.req.header('authorization')));
+      const token = bearer(context.req.header('authorization'));
+      const account = await getAccount(token);
       if (!account) throw new Error('Please sign in to start talking.');
       const resourceId = resourceFor(account);
       const threadId = await startCall(resourceId);
+      const voice = await createPendingVoiceSession(token!, threadId);
       // Ignore all client-supplied agent, resource, thread and request-context fields.
-      return { agentId: 'al', threadId, resourceId, requestContext: { alResourceId: resourceId } };
+      return { agentId: 'al', threadId, resourceId, requestContext: {
+        alResourceId: resourceId, alThreadId: threadId, alVoiceSessionId: voice.sessionId,
+      } };
     },
   });
   const requireAccount: MiddlewareHandler = async (c, next) => {

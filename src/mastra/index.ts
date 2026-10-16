@@ -12,12 +12,16 @@ import {
 import { agent } from './agents/agent';
 import { al } from './agents/al';
 import { startScheduleTool, stopScheduleTool } from './tools/schedule-tools';
+import { reminderTools } from './tools/reminder-tools';
+import { dispatchReminders } from './workflows/dispatch-reminders';
 
 // LiveKit sends a call only to a worker registered under this name ("explicit dispatch").
 // The connection route below asks for it, and voice-worker.ts registers with it.
 export const AL_AGENT_NAME = 'al';
 
 export const mastra = new Mastra({
+  // LiveKit parent/job processes share this module but must not tick the scheduler.
+  scheduler: { enabled: process.env.AL_PROCESS_ROLE !== 'voice' },
   server: {
     // Studio and built-in agent/memory APIs are developer-only. Expose the Next UI.
     host: '127.0.0.1',
@@ -26,7 +30,8 @@ export const mastra = new Mastra({
     apiRoutes: [...accountRoutes, authenticatedVoiceRoute(AL_AGENT_NAME)],
   },
   agents: { agent, al },
-  tools: { startScheduleTool, stopScheduleTool, recallCallsTool, forgetMemoryTool },
+  tools: { startScheduleTool, stopScheduleTool, recallCallsTool, forgetMemoryTool, ...reminderTools },
+  workflows: { dispatchReminders },
   // Neon Postgres holds everything: threads, workflow state, and traces. Mastra creates its
   // tables on startup. The voice worker is a separate process that imports this file too, so the
   // store must accept writes from two processes; a local single-writer file (DuckDB) cannot.
